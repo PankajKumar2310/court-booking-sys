@@ -12,7 +12,37 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+
+// CORS Configuration for production and development
+const corsOptions = {
+    origin: function (origin, callback) {
+       
+        if (!origin) return callback(null, true);
+
+       
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://localhost:5173',
+           
+        ];
+
+       
+        if (process.env.NODE_ENV === 'production') {
+          
+            return callback(null, true);
+        }
+
+        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+            callback(null, true);
+        } else {
+            callback(null, true); // Allow all for now
+        }
+    },
+    credentials: true,
+    optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 
 app.use('/api/courts', require('./routes/courtRoutes'));
 app.use('/api/equipment', require('./routes/equipmentRoutes'));
