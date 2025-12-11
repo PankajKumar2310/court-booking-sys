@@ -62,7 +62,13 @@ const BookingPage = () => {
         const slotEnd = addHours(slotStart, 1);
 
         return bookings.some(b => {
-            if (b.court._id !== courtId && b.court !== courtId) return false;
+            // Add null/undefined checks
+            if (!b || !b.court) return false;
+
+            // Check if court matches (handle both populated and unpopulated court)
+            const bookingCourtId = typeof b.court === 'object' ? b.court._id : b.court;
+            if (bookingCourtId !== courtId) return false;
+
             const bStart = new Date(b.startTime);
             const bEnd = new Date(b.endTime);
             return (slotStart < bEnd && bStart < slotEnd);
@@ -128,7 +134,7 @@ const BookingPage = () => {
             setSelectedCourt(null);
             setResources({ rackets: 0, shoes: 0, coach: '' });
         } catch (err) {
-            
+
         } finally {
             setLoading(false);
         }
@@ -137,7 +143,7 @@ const BookingPage = () => {
     return (
         <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
+
                 <div className="md:col-span-2 space-y-6">
                     <div className="bg-white p-6 rounded-lg shadow">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
@@ -184,7 +190,7 @@ const BookingPage = () => {
                     </div>
                 </div>
 
-              
+
                 <div className="space-y-6">
                     {selectedCourt && selectedSlot ? (
                         <div className="bg-white p-6 rounded-lg shadow border-2 border-blue-100 stick top-4">
