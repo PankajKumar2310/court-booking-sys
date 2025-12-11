@@ -25,7 +25,8 @@ const useDeleteConfirmation = (onConfirm) => {
         try {
             setIsDeleting(true);
             setDeleteError('');
-            await onConfirm(deleteTarget.endpoint);
+            // Pass the deleteTarget to the callback so it has access to the item
+            await onConfirm(deleteTarget);
             setDeleteTarget(null);
         } catch (err) {
             setDeleteError(err.response?.data?.message || 'Failed to delete. Please try again.');

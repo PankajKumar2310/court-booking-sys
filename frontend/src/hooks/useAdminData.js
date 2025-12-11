@@ -53,9 +53,13 @@ const useAdminData = (activeTab) => {
 
     const deleteItem = useCallback(async (id) => {
         const endpoint = getEndpoint(activeTab);
+        console.log('deleteItem called with id:', id, 'activeTab:', activeTab, 'endpoint:', endpoint);
         if (!endpoint) throw new Error('Invalid tab');
 
-        await del(`${endpoint}/${id}`);
+        const deleteUrl = `${endpoint}/${id}`;
+        console.log('Calling DELETE:', deleteUrl);
+        await del(deleteUrl);
+        console.log('Delete API call successful, refreshing data...');
         await fetchData(); // Refresh data
     }, [activeTab, del, getEndpoint, fetchData]);
 

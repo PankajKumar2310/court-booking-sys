@@ -16,19 +16,20 @@ app.use(express.json());
 // CORS Configuration for production and development
 const corsOptions = {
     origin: function (origin, callback) {
-       
+
         if (!origin) return callback(null, true);
 
-       
+
         const allowedOrigins = [
             'http://localhost:3000',
             'http://localhost:5173',
-           
+            'http://localhost:5174', // Added for Vite dev server
+
         ];
 
-       
+
         if (process.env.NODE_ENV === 'production') {
-          
+
             return callback(null, true);
         }
 

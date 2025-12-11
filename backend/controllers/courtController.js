@@ -44,13 +44,17 @@ const updateCourt = async (req, res) => {
 
 const deleteCourt = async (req, res) => {
     try {
+        console.log('DELETE court request received for ID:', req.params.id);
         const court = await Court.findByIdAndDelete(req.params.id);
         if (court) {
+            console.log('Court deleted successfully:', court.name);
             res.json({ message: 'Court removed', data: court });
         } else {
+            console.log('Court not found with ID:', req.params.id);
             res.status(404).json({ message: 'Court not found' });
         }
     } catch (error) {
+        console.error('Error deleting court:', error.message);
         res.status(500).json({ message: error.message });
     }
 };

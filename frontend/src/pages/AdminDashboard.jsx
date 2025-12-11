@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import useApi from '../hooks/useApi';
 import useAdminData from '../hooks/useAdminData';
-import useDeleteConfirmation from '../hooks/useDeleteConfirmation';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import AdminFormModal from '../components/AdminFormModal';
 
@@ -12,16 +11,47 @@ const AdminDashboard = () => {
 
     const { get, put } = useApi();
     const { data, loading, fetchData, createItem, deleteItem } = useAdminData(activeTab);
-    const {
-        deleteTarget,
-        deleteError,
-        isDeleting,
-        openDeleteModal,
-        closeDeleteModal,
-        confirmDelete
-    } = useDeleteConfirmation(async (endpoint) => {
-        await deleteItem(deleteTarget.id);
-    });
+
+    // Simplified delete confirmation state
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleteError, setDeleteError] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const openDeleteModal = (item, label, endpoint) => {
+        setDeleteError('');
+        setDeleteTarget({
+            id: item._id,
+            label,
+            endpoint
+        });
+    };
+
+    const closeDeleteModal = () => {
+        setDeleteTarget(null);
+        setDeleteError('');
+        setIsDeleting(false);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+
+        try {
+            setIsDeleting(true);
+            setDeleteError('');
+            console.log('Confirming delete for:', deleteTarget);
+
+            // Directly call deleteItem with the ID
+            await deleteItem(deleteTarget.id);
+
+            console.log('Delete successful, closing modal');
+            setDeleteTarget(null);
+        } catch (err) {
+            console.error('Delete failed:', err);
+            setDeleteError(err.response?.data?.message || err.message || 'Failed to delete. Please try again.');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     useEffect(() => {
         fetchData();
@@ -63,6 +93,7 @@ const AdminDashboard = () => {
     };
 
     const handleSubmit = async (formData) => {
+        console.log('AdminDashboard received formData:', formData);
         try {
             // Convert numeric fields and prepare payload
             const payload = { ...formData };
