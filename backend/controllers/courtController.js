@@ -24,6 +24,7 @@ const createCourt = async (req, res) => {
 
 const updateCourt = async (req, res) => {
     try {
+        console.log(`UPDATE Court Request: ID=${req.params.id}`, req.body);
         const court = await Court.findById(req.params.id);
         if (court) {
             court.name = req.body.name || court.name;
@@ -32,11 +33,14 @@ const updateCourt = async (req, res) => {
             if (req.body.isActive !== undefined) court.isActive = req.body.isActive;
 
             const updatedCourt = await court.save();
+            console.log('Court updated successfully:', updatedCourt);
             res.json(updatedCourt);
         } else {
+            console.log('Court not found for update');
             res.status(404).json({ message: 'Court not found' });
         }
     } catch (error) {
+        console.error('Update Court Error:', error);
         res.status(400).json({ message: error.message });
     }
 };

@@ -1,26 +1,44 @@
 import { useState, useEffect } from 'react';
 
-const AdminFormModal = ({ isOpen, activeTab, coaches, onSubmit, onClose }) => {
+const AdminFormModal = ({ isOpen, activeTab, coaches, onSubmit, onClose, initialData = null }) => {
     const [formData, setFormData] = useState({});
 
     // Initialize form data with default values when modal opens
     useEffect(() => {
         if (isOpen) {
-            // Set default values based on activeTab
-            const defaults = {};
+            if (initialData) {
+                // Populate form with existing data for editing
+                const data = { ...initialData };
 
-            if (activeTab === 'courts') {
-                defaults.type = 'indoor'; // Default court type
-            } else if (activeTab === 'equipment') {
-                defaults.type = 'racket'; // Default equipment type
-            } else if (activeTab === 'rules') {
-                defaults.type = 'multiplier'; // Default rule type
-                defaults.isActive = true; // Default active state
+                // Format specific fields if necessary
+                if (activeTab === 'rules') {
+                    // Ensure days is comma-separated string if it's an array
+                    if (data.conditions?.days && Array.isArray(data.conditions.days)) {
+                        data.days = data.conditions.days.join(',');
+                    }
+                    if (data.conditions?.startTime) data.startTime = data.conditions.startTime;
+                    if (data.conditions?.endTime) data.endTime = data.conditions.endTime;
+                    if (data.conditions?.courtType) data.courtType = data.conditions.courtType;
+                }
+
+                setFormData(data);
+            } else {
+                // Set default values based on activeTab
+                const defaults = {};
+
+                if (activeTab === 'courts') {
+                    defaults.type = 'indoor'; // Default court type
+                } else if (activeTab === 'equipment') {
+                    defaults.type = 'racket'; // Default equipment type
+                } else if (activeTab === 'rules') {
+                    defaults.type = 'multiplier'; // Default rule type
+                    defaults.isActive = true; // Default active state
+                }
+
+                setFormData(defaults);
             }
-
-            setFormData(defaults);
         }
-    }, [isOpen, activeTab]);
+    }, [isOpen, activeTab, initialData]);
 
     if (!isOpen) return null;
 
@@ -57,8 +75,8 @@ const AdminFormModal = ({ isOpen, activeTab, coaches, onSubmit, onClose }) => {
                     ✕
                 </button>
                 <div className="mb-4">
-                    <p className="text-xs uppercase tracking-widest text-blue-500 font-semibold">Create</p>
-                    <h2 className="text-2xl font-bold capitalize text-slate-800">Add {activeTab}</h2>
+                    <p className="text-xs uppercase tracking-widest text-blue-500 font-semibold">{initialData ? 'Edit' : 'Create'}</p>
+                    <h2 className="text-2xl font-bold capitalize text-slate-800">{initialData ? 'Edit' : 'Add'} {activeTab}</h2>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
 

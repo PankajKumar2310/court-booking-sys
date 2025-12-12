@@ -73,3 +73,5 @@ const seedData = async () => {
 };
 
 seedData();
+
+// only when a MongoDB connection is not established;

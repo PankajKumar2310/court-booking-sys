@@ -7,10 +7,11 @@ import AdminFormModal from '../components/AdminFormModal';
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('bookings');
     const [showForm, setShowForm] = useState(false);
+    const [editingItem, setEditingItem] = useState(null);
     const [coaches, setCoaches] = useState([]);
 
     const { get, put } = useApi();
-    const { data, loading, fetchData, createItem, deleteItem } = useAdminData(activeTab);
+    const { data, loading, fetchData, createItem, updateItem, deleteItem } = useAdminData(activeTab);
 
     // Simplified delete confirmation state
     const [deleteTarget, setDeleteTarget] = useState(null);
@@ -40,8 +41,8 @@ const AdminDashboard = () => {
             setDeleteError('');
             console.log('Confirming delete for:', deleteTarget);
 
-            // Directly call deleteItem with the ID
-            await deleteItem(deleteTarget.id);
+            // Directly call deleteItem with the ID and endpoint
+            await deleteItem(deleteTarget.id, deleteTarget.endpoint);
 
             console.log('Delete successful, closing modal');
             setDeleteTarget(null);
@@ -79,10 +80,30 @@ const AdminDashboard = () => {
             label = item.name || item.title || 'this item';
         }
 
-        const endpoint = `/${activeTab === 'rules' ? 'pricing-rules' : activeTab}/${item._id}`;
+        const endpoint = `/${activeTab === 'rules' ? 'pricing-rules' : activeTab}`;
         openDeleteModal(item, label, endpoint);
     };
 
+    const handleEdit = (item) => {
+        setEditingItem(item);
+        setShowForm(true);
+    };
+
+    const handleDisable = async (item) => {
+        try {
+            await updateItem(item._id, { isActive: !item.isActive });
+            if (activeTab === 'courts' && !item.isActive) {
+                alert('Court enabled successfully');
+            } else if (activeTab === 'courts') {
+                alert('Court disabled successfully');
+            }
+        } catch (err) {
+            console.error('Failed to update status:', err);
+            alert('Failed to update status');
+        }
+    };
+
+    // existing handleStatusUpdate for bookings..
     const handleStatusUpdate = async (id, status) => {
         try {
             await put(`/bookings/${id}`, { status });
@@ -132,10 +153,22 @@ const AdminDashboard = () => {
                 delete payload.courtType;
             }
 
-            await createItem(payload);
+            // Remove system fields to prevent backend issues
+            delete payload._id;
+            delete payload.__v;
+            delete payload.createdAt;
+            delete payload.updatedAt;
+            delete payload.court; // In case it's populated
+
+            if (editingItem) {
+                await updateItem(editingItem._id, payload);
+            } else {
+                await createItem(payload);
+            }
             setShowForm(false);
+            setEditingItem(null);
         } catch (err) {
-            alert('Failed to create. Check console for details.');
+            alert('Failed to save. Check console for details.');
             console.error(err);
         }
     };
@@ -181,7 +214,7 @@ const AdminDashboard = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {data.map((item) => (
                                 <tr key={item._id}>
-                                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                    <td className={`px-6 py-4 text-sm font-medium text-gray-900 ${item.isActive === false ? 'opacity-50' : ''}`}>
                                         {activeTab === 'bookings' ? (
                                             <div>
                                                 <div className="font-bold">{item.court?.name || 'Unknown Court'}</div>
@@ -190,10 +223,19 @@ const AdminDashboard = () => {
                                                 </div>
                                                 <div className="text-xs text-gray-400">User: {item.user?.name}</div>
                                             </div>
-                                        ) : item.name}
+                                        ) : (
+                                            <div>
+                                                {item.name}
+                                                {item.isActive === false && (
+                                                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                                        Disabled
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
                                     </td>
 
-                                    <td className="px-6 py-4 text-sm text-gray-500">
+                                    <td className={`px-6 py-4 text-sm text-gray-500 ${item.isActive === false ? 'opacity-50' : ''}`}>
                                         {activeTab === 'bookings' && (
                                             <div>
                                                 <div>Total: ${item.totalPrice}</div>
@@ -239,12 +281,30 @@ const AdminDashboard = () => {
                                                 </button>
                                             </div>
                                         ) : (
-                                            <button
-                                                onClick={() => handleDelete(item)}
-                                                className="text-red-600 hover:text-red-900 cursor-pointer"
-                                            >
-                                                Delete
-                                            </button>
+                                            <div className="flex justify-end space-x-3">
+                                                <button
+                                                    onClick={() => handleEdit(item)}
+                                                    className="text-blue-600 hover:text-blue-900 cursor-pointer"
+                                                >
+                                                    Edit
+                                                </button>
+
+                                                {activeTab === 'courts' && (
+                                                    <button
+                                                        onClick={() => handleDisable(item)}
+                                                        className={`${item.isActive !== false ? 'text-orange-600 hover:text-orange-900' : 'text-green-600 hover:text-green-900'} cursor-pointer`}
+                                                    >
+                                                        {item.isActive !== false ? 'Disable' : 'Enable'}
+                                                    </button>
+                                                )}
+
+                                                <button
+                                                    onClick={() => handleDelete(item)}
+                                                    className="text-red-600 hover:text-red-900 cursor-pointer"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
                                         )}
                                     </td>
                                 </tr>
@@ -259,7 +319,11 @@ const AdminDashboard = () => {
                 activeTab={activeTab}
                 coaches={coaches}
                 onSubmit={handleSubmit}
-                onClose={() => setShowForm(false)}
+                onClose={() => {
+                    setShowForm(false);
+                    setEditingItem(null);
+                }}
+                initialData={editingItem}
             />
 
             <DeleteConfirmationModal

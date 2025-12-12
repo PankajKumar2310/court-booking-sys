@@ -43,20 +43,30 @@ const useAdminData = (activeTab) => {
     }, [activeTab, post, getEndpoint, fetchData]);
 
     const updateItem = useCallback(async (id, itemData) => {
-        const endpoint = getEndpoint(activeTab);
-        if (!endpoint) throw new Error('Invalid tab');
+        try {
+            const endpoint = getEndpoint(activeTab);
+            if (!endpoint) throw new Error('Invalid tab');
 
-        const response = await put(`${endpoint}/${id}`, itemData);
-        await fetchData(); // Refresh data
-        return response;
+            console.log(`Updating item ${id} at ${endpoint}`, itemData);
+            const response = await put(`${endpoint}/${id}`, itemData);
+            console.log('Update success, refreshing data...');
+            await fetchData(); // Refresh data
+            return response;
+        } catch (err) {
+            console.error('Error in updateItem:', err);
+            throw err;
+        }
     }, [activeTab, put, getEndpoint, fetchData]);
 
-    const deleteItem = useCallback(async (id) => {
-        const endpoint = getEndpoint(activeTab);
+    const deleteItem = useCallback(async (id, endpointOverride = null) => {
+        const endpoint = endpointOverride || getEndpoint(activeTab);
         console.log('deleteItem called with id:', id, 'activeTab:', activeTab, 'endpoint:', endpoint);
         if (!endpoint) throw new Error('Invalid tab');
 
-        const deleteUrl = `${endpoint}/${id}`;
+        const deleteUrl = `${endpoint}/${id}`; // Ensure no double slashes or missing slashes if endpoint already has them
+        // Ideally getEndpoint returns string starting with /, so this is fine.
+        // If endpointOverride is full path, we might need adjustment, but looking at AdminDashboard it sends relative path.
+
         console.log('Calling DELETE:', deleteUrl);
         await del(deleteUrl);
         console.log('Delete API call successful, refreshing data...');

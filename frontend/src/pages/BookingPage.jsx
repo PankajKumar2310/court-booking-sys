@@ -36,7 +36,8 @@ const BookingPage = () => {
                 get('/courts'),
                 get('/coaches')
             ]);
-            setCourts(courtsRes);
+            // Only show active courts
+            setCourts(courtsRes.filter(c => c.isActive !== false));
             setCoaches(coachesRes);
             await fetchBookings();
         } catch (err) {

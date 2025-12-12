@@ -13,7 +13,7 @@ const app = express();
 // Middleware
 app.use(express.json());
 
-// CORS Configuration for production and development
+
 const corsOptions = {
     origin: function (origin, callback) {
 
@@ -23,7 +23,7 @@ const corsOptions = {
         const allowedOrigins = [
             'http://localhost:3000',
             'http://localhost:5173',
-            'http://localhost:5174', // Added for Vite dev server
+            'http://localhost:5174', 
 
         ];
 
